@@ -26,7 +26,7 @@ az account show
 
 4. Ausführen der Bereitstellung
 
-`terraform apply -var `
+`terraform apply`
 
 5. Kubeconfig erzeugen, wird automatisch mit bestehender config zusammengeführt
 
