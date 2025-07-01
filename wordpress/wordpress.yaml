@@ -1,0 +1,175 @@
+# Der PVC für den Speicherplatz der Datenbank. Bestellt werden 4 GByte.
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-wp-db
+  namespace: backend
+spec:
+  accessModes:
+   - ReadWriteOnce
+  storageClassName: azureblob-nfs-premium
+  resources:
+    requests:
+      storage: 1Gi
+---
+# Ein Secret mit Benutzername und Kennwort für die Datenbank im Backend.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-wp-db
+  namespace: backend
+type: Opaque
+data:
+  rootPassword: dmVyeVNlY3JldA==
+  username: d3A=
+  password: c2VjcmV0V3A=
+---
+# Ein weiteres Secret mit Benutzername und Kennwort für das Frontend.
+# Wegen der Trennung in Namespaces ist das hier doppelt.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-wp-fe
+  namespace: frontend
+type: Opaque
+data:
+  username: d3A=
+  password: c2VjcmV0V3A=
+---
+# ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-wp-fe
+  namespace: frontend
+data:
+  WORDPRESS_DB_HOST: wp-database.backend
+  WORDPRESS_DB_NAME: wp
+---
+# Database
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wb-database-deployment
+  namespace: backend
+  labels:
+    app: wp-database
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: wp-database
+  template:
+    metadata:
+      name: wp-database
+      namespace: backend
+      labels:
+        app: wp-database
+    spec:
+      volumes:
+        - name: volume-wp-db
+          persistentVolumeClaim:
+            claimName: pvc-wp-db
+      containers:
+        - name: mariadb
+          image: mariadb
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: volume-wp-db
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MARIADB_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-wp-db
+                  key: rootPassword
+            - name: MARIADB_DATABASE
+              value: "wp"
+            - name: MARIADB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: secret-wp-db
+                  key: username
+            - name: MARIADB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-wp-db
+                  key: password
+---
+# Frontend
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wb-web-deployment
+  namespace: frontend
+  labels:
+    app: wp-web
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 50%
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: wp-web
+  template:
+    metadata:
+      labels:
+        app: wp-web
+    spec:
+      containers:
+        - name: web
+          image: wordpress:latest
+          ports:
+            - containerPort: 80
+          envFrom:
+            - configMapRef:
+                name: config-wp-fe
+          env:
+            - name: WORDPRESS_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: secret-wp-fe
+                  key: username
+            - name: WORDPRESS_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: secret-wp-fe
+                  key: password
+---
+# Service Backend
+apiVersion: v1
+kind: Service
+metadata:
+  name: wp-database
+  namespace: backend
+spec:
+  selector:
+    app: wp-database
+  ports:
+    - protocol: TCP
+
+      port: 3306
+      targetPort: 3306
+---
+# Service Frontend
+apiVersion: v1
+kind: Service
+metadata:
+  name: wp-external
+  namespace: frontend
+spec:
+  type: LoadBalancer
+  selector:
+    app: wp-web
+  ports:
+    - protocol: TCP
+      #nodePort: 30001
+      port: 80
+      targetPort: 80
