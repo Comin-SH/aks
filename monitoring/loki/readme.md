@@ -2,19 +2,19 @@ Quelle:
 https://grafana.com/docs/loki/latest/setup/install/helm/deployment-guides/azure/
 
 Setzen Variablen
-´´´
+```
 sa_name=salokiafl
 clustername=k8s
 rg=k8s-rg
 ad_app_name=loki-test-afl
 SUBSCRIPTION_ID=$(az account show --query id --output tsv)
 
-´´´
+```
 
 Blob Storage aktivieren im Cluster
-````
+```
 az aks update --enable-blob-driver --name $clustername --resource-group $rg
-
+```
 
 Erstellen Storage Account
 ```
@@ -33,12 +33,13 @@ az storage container create --account-name $sa_name --name ruler --auth-mode log
 ````
 
 Aktivieren Workload Identity und OIDC issuer
-````
+```
 az aks update \
   --resource-group $rg\
   --name $clustername \
   --enable-workload-identity \
   --enable-oidc-issuer
+```
 
 OIDC issuer URL herausfinden
 ```
@@ -47,9 +48,10 @@ oidc=$(az aks show \
 --name $clustername \
 --query "oidcIssuerProfile.issuerUrl" \
 -o tsv)
-´´´
+```
 
-````
+Credentials Datei erzeugen
+```
 cat <<EOF > credentials.json
 {
     "name": "LokiFederatedIdentity",
@@ -80,7 +82,7 @@ az role assignment create \
   --role "Storage Blob Data Contributor" \
   --assignee $appid \
   --scope /subscriptions/$SUBSCRIPTION_ID/resourceGroups/$rg/providers/Microsoft.Storage/storageAccounts/$sa_name
-'''
+```
 
 ````
 helm repo add grafana https://grafana.github.io/helm-charts
@@ -88,7 +90,7 @@ helm repo update
 ````
 
 Erstellen von .htpasswd für Basic Authentication
-````
+```
 htpasswd -c .htpasswd loki
 kubectl create secret generic loki-basic-auth --from-file=.htpasswd -n monitoring
 
@@ -99,6 +101,6 @@ kubectl create secret generic canary-basic-auth \
 ```
 
 Deploy Loki
-````
+```
 helm upgrade --install --values values.yaml loki grafana/loki -n monitoring 
-````
+```
