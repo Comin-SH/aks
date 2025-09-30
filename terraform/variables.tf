@@ -45,3 +45,20 @@ variable "dns_prefix" {
   description = "The dns prefix of the k8s cluster"
   default     = "k8s"
 }
+
+variable "admin_group_object_ids" {
+  description = "aks admin group ids"
+  type        = list(string)
+  #default     =  ["89f91d61-a2cc-449e-b54a-1015de96f1cc"]
+}
+
+variable "admin_group_name" {
+  type        = string
+  description = "The name of the admin group"
+  default     = "Test_Group_AKS_Terraform_RBAC"
+}
+
+variable "subscription_id" {
+  type        = string
+  description = "The subscription id to deploy the resources to."
+}
