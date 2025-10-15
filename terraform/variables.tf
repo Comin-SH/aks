@@ -49,14 +49,21 @@ variable "dns_prefix" {
 variable "admin_group_object_ids" {
   description = "aks admin group ids"
   type        = list(string)
-  #default     =  ["89f91d61-a2cc-449e-b54a-1015de96f1cc"]
+  default     =  []
 }
 
-variable "admin_group_name" {
-  type        = string
-  description = "The name of the admin group"
-  default     = "Test_Group_AKS_Terraform_RBAC"
+variable "rbac_reader_group_object_ids" {
+  description = "Object IDs of groups that should get the 'Kubernetes Service RBAC Reader' role"
+  type        = list(string)
+  default     = []
 }
+
+
+# variable "admin_group_name" {
+#   type        = string
+#   description = "The name of the admin group"
+#   default     = "Test_Group_AKS_Terraform_RBAC"
+# }
 
 variable "subscription_id" {
   type        = string
