@@ -11,19 +11,19 @@ resource "azurerm_resource_group" "rg" {
 # }
 
 resource "azurerm_kubernetes_cluster" "k8s" {
-  location            = azurerm_resource_group.rg.location
-  name                = var.cluster_name
-  resource_group_name = azurerm_resource_group.rg.name
-  dns_prefix          = var.dns_prefix
-
+  location               = azurerm_resource_group.rg.location
+  name                   = var.cluster_name
+  resource_group_name    = azurerm_resource_group.rg.name
+  dns_prefix             = var.dns_prefix
+  local_account_disabled = true
   identity {
     type = "SystemAssigned"
   }
 
-  azure_active_directory_role_based_access_control {
-    admin_group_object_ids = var.admin_group_object_ids
-    azure_rbac_enabled     = true
-  }
+  # azure_active_directory_role_based_access_control {
+  #   admin_group_object_ids = var.admin_group_object_ids
+  #   azure_rbac_enabled     = true
+  # }
 
   default_node_pool {
     name       = "agentpool"
@@ -47,5 +47,12 @@ resource "azurerm_role_assignment" "admin" {
   for_each = toset(var.admin_group_object_ids)
   scope = azurerm_kubernetes_cluster.k8s.id
   role_definition_name = "Azure Kubernetes Service Cluster User Role"
+  principal_id = each.value
+}
+
+resource "azurerm_role_assignment" "rbac_reader" {
+  for_each = toset(var.rbac_reader_group_object_ids)
+  scope = azurerm_kubernetes_cluster.k8s.id
+  role_definition_name = "Azure Kubernetes Service RBAC Reader"
   principal_id = each.value
 }
