@@ -7,10 +7,13 @@ spec:
   project: default
   syncPolicy:
     automated: {}
-  source:
+  sources:
     - chart: argo-cd
       repoURL: https://argoproj.github.io/argo-helm
       targetRevision: 8.6.4
+    - repoURL: 'https://github.com/Comin-SH/aks.git'
+      targetRevision: main
+      path: argocd/apps/argocd
   destination:
     namespace: argocd
     server: https://kubernetes.default.svc
