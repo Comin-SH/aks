@@ -1,0 +1,18 @@
+## Datei vermutlich nur notwendig wenn Repository Privat ist
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: github-config
+  namespace: argocd
+data:
+  repositories: |
+    - url: https://github.com/Comin-SH/aks.git
+      name: comin-repo-github-public
+      type: git
+      # password: your-password
+      # username: your-username
+      # sshPrivateKey: |
+      #   -----BEGIN OPENSSH PRIVATE KEY-----
+      #   ...
+      #   -----END OPENSSH PRIVATE KEY-----
