@@ -58,14 +58,17 @@ variable "rbac_reader_group_object_ids" {
   default     = []
 }
 
-
-# variable "admin_group_name" {
-#   type        = string
-#   description = "The name of the admin group"
-#   default     = "Test_Group_AKS_Terraform_RBAC"
-# }
+variable "rbac_admin_group_object_ids" {
+  description = "Object IDs of groups that should get the 'Kubernetes Service RBAC Cluster Admin' role"
+  type        = list(string)
+  default     = []
+}
 
 variable "subscription_id" {
   type        = string
   description = "The subscription id to deploy the resources to."
+}
+
+locals {
+  all_aks_users = setunion(var.rbac_reader_group_object_ids, var.rbac_admin_group_object_ids)
 }
