@@ -3,6 +3,11 @@ resource "azurerm_resource_group" "rg" {
   name     = var.resource_group_name
 }
 
+
+## Dieser Abschnitt würde eine neue Azure AD Gruppe erstellen,
+## wird aber hier nicht benötigt, da die Gruppen extern verwaltet werden.
+## assignable_to_role kann nicht gesetzt werden ohne Rolle Privileged Role Administrator
+
 # resource "azuread_group" "aks_admins" {
 #   display_name       = var.admin_group_name
 #   security_enabled   = true
@@ -20,10 +25,10 @@ resource "azurerm_kubernetes_cluster" "k8s" {
     type = "SystemAssigned"
   }
 
-  # azure_active_directory_role_based_access_control {
-  #   admin_group_object_ids = var.admin_group_object_ids
-  #   azure_rbac_enabled     = true
-  # }
+  azure_active_directory_role_based_access_control {
+    admin_group_object_ids = var.admin_group_object_ids
+    azure_rbac_enabled     = true
+  }
 
   default_node_pool {
     name       = "agentpool"
@@ -43,8 +48,8 @@ resource "azurerm_kubernetes_cluster_node_pool" "userpool" {
   node_count            = var.user_pool_node_count
 }
 
-resource "azurerm_role_assignment" "admin" {
-  for_each = toset(var.admin_group_object_ids)
+resource "azurerm_role_assignment" "cluster_user" {
+  for_each = toset(local.all_aks_users)
   scope = azurerm_kubernetes_cluster.k8s.id
   role_definition_name = "Azure Kubernetes Service Cluster User Role"
   principal_id = each.value
@@ -54,5 +59,12 @@ resource "azurerm_role_assignment" "rbac_reader" {
   for_each = toset(var.rbac_reader_group_object_ids)
   scope = azurerm_kubernetes_cluster.k8s.id
   role_definition_name = "Azure Kubernetes Service RBAC Reader"
+  principal_id = each.value
+}
+
+resource "azurerm_role_assignment" "admin" {
+  for_each = toset(var.rbac_admin_group_object_ids)
+  scope = azurerm_kubernetes_cluster.k8s.id
+  role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
   principal_id = each.value
 }
