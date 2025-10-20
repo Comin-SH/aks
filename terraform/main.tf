@@ -69,3 +69,11 @@ resource "azurerm_role_assignment" "admin" {
   role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
   principal_id = each.value
 }
+
+# ------------------------
+# Warten bis API erreichbar
+# ------------------------
+# resource "time_sleep" "wait_for_api" {
+#   depends_on      = [azurerm_kubernetes_cluster.k8s]
+#   create_duration = "30s"
+# }
