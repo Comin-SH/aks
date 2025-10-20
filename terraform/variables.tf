@@ -25,7 +25,7 @@ variable "agent_pool-vm_size" {
 variable "user_pool_node_count" {
   type        = number
   description = "The initial quantity of nodes for the user node pool."
-  default     = 2
+  default     = 1
 }
 
 variable "user_pool-vm_size" {
