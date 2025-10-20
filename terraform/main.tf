@@ -20,7 +20,8 @@ resource "azurerm_kubernetes_cluster" "k8s" {
   name                   = var.cluster_name
   resource_group_name    = azurerm_resource_group.rg.name
   dns_prefix             = var.dns_prefix
-  local_account_disabled = true
+  # Lokaler Account erstmal aktiviert, damit Argo CD mittels Helm installiert werden kann
+  local_account_disabled = false
   identity {
     type = "SystemAssigned"
   }
