@@ -22,6 +22,8 @@ resource "helm_release" "argocd" {
   depends_on = [
     azurerm_kubernetes_cluster.k8s
   ]
+
+    # depends_on = [time_sleep.wait_for_api]
 }
 
 # # Apply the repository ConfigMap so ArgoCD knows the public GitHub repo
@@ -33,9 +35,27 @@ resource "helm_release" "argocd" {
 # }
 
 # Create the App of Apps Application in ArgoCD
-resource "kubernetes_manifest" "argocd_apps_of_apps" {
-  manifest = yamldecode(file("${path.root}/../argocd/apps-of-apps.yaml"))
-#   depends_on = [
-#     kubernetes_manifest.argocd_repository
-#   ]
+
+# locals {
+# resource_list = yamldecode(file("${path.module}/../argocd/apps-of-apps.yaml"))
+# }
+
+
+# resource "kubectl_manifest" "test" {
+#     count     = length(local.resource_list)
+#     yaml_body = yamlencode(local.resource_list[count.index]) 
+# }
+
+resource "kubectl_manifest" "argocd_apps_of_apps" {
+  yaml_body  = file("${path.root}/../argocd/apps-of-apps.yaml")
+  depends_on = [helm_release.argocd]
 }
+
+
+
+# resource "kubectl_manifest" "argocd_apps_of_apps" {
+#   yaml_body = yamldecode(file("${path.root}/../argocd/apps-of-apps.yaml"))
+#   depends_on = [
+#     helm_release.argocd
+#   ]
+# }
