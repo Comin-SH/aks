@@ -12,6 +12,7 @@ spec:
     automated: {}
     syncOptions:
     - CreateNamespace=true
+    - ServerSideApply=true
   sources:
     - repoURL: 'https://github.com/Comin-SH/aks.git'
       targetRevision: main
