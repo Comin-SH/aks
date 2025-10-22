@@ -51,8 +51,6 @@ resource "kubectl_manifest" "argocd_apps_of_apps" {
   depends_on = [helm_release.argocd]
 }
 
-
-
 # resource "kubectl_manifest" "argocd_apps_of_apps" {
 #   yaml_body = yamldecode(file("${path.root}/../argocd/apps-of-apps.yaml"))
 #   depends_on = [
