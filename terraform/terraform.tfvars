@@ -12,3 +12,5 @@ subscription_id = "9eb1d0a1-210a-4b35-a46f-fc86076e242e"
 #admin_group_object_ids = []
 rbac_reader_group_object_ids = []
 rbac_admin_group_object_ids = ["7e9fe796-1a3b-4d2e-b2fe-b0cb0f3f5c49"]
+
+STORAGE_ACCOUNT_NAME = "lokistorageacct01"

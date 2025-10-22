@@ -22,6 +22,21 @@ resource "azurerm_kubernetes_cluster" "k8s" {
   dns_prefix             = var.dns_prefix
   # Lokaler Account erstmal aktiviert, damit Argo CD mittels Helm installiert werden kann
   local_account_disabled = false
+
+  # Die Workload Identity wird später von Grafana für den Zugriff auf den Key Vault und von Loki für den Zugriff auf den Blob Storage benötigt.
+  oidc_issuer_enabled      = true
+  workload_identity_enabled = true
+
+  # Wird benötigt als Storage für Loki
+  storage_profile {
+    blob_driver_enabled     = true
+  }
+
+
+  key_vault_secrets_provider {
+    secret_rotation_interval = "2m" 
+  }
+
   identity {
     type = "SystemAssigned"
   }

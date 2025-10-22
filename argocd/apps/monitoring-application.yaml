@@ -1,0 +1,43 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+spec:
+  project: default
+  destination:
+    namespace: monitoring
+    server: https://kubernetes.default.svc
+  syncPolicy:
+    automated: {}
+  sources:
+    - repoURL: 'https://github.com/Comin-SH/aks.git'
+      targetRevision: main
+      ref: values
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: 77.0.2
+      helm:
+        valueFiles:
+          - $values/argocd/apps/monitoring/kube-prometheus-stack/kube-prometheus-stack-values.yaml
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: loki
+      targetRevision: 6.38.0
+      helm:
+        valueFiles:
+          - $values/argocd/apps/monitoring/loki/loki-values.yaml
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: k8s-monitoring
+      targetRevision: 3.3.2
+      helm:
+        valueFiles:
+          - $values/argocd/apps/monitoring/loki/k8s-monitoring/k8s-monitoring-values.yaml
+    - repoURL: https://charts.enix.io
+      chart: x509-certificate-exporter
+      targetRevision: 3.19.1
+      helm:
+        valueFiles:
+          - $values/argocd/apps/monitoring/kube-prometheus-stack/grafana/x509-certificate-exporter/x509-certificate-exporter-values.yaml
+    - repoURL: 'https://github.com/Comin-SH/aks.git'
+      targetRevision: main
+      path: argocd/apps/monitoring

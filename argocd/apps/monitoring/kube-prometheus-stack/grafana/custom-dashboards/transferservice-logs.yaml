@@ -1,0 +1,246 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-transferservice-logs
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  transferservice-logs.json: |-
+    {
+      "annotations": {
+        "list": [
+          {
+            "builtIn": 1,
+            "datasource": {
+              "type": "grafana",
+              "uid": "-- Grafana --"
+            },
+            "enable": true,
+            "hide": true,
+            "iconColor": "rgba(0, 211, 255, 1)",
+            "name": "Annotations & Alerts",
+            "target": {
+              "limit": 100,
+              "matchAny": false,
+              "tags": [],
+              "type": "dashboard"
+            },
+            "type": "dashboard"
+          }
+        ]
+      },
+      "editable": true,
+      "fiscalYearStartMonth": 0,
+      "graphTooltip": 0,
+      "links": [],
+      "panels": [
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 12,
+            "w": 24,
+            "x": 0,
+            "y": 0
+          },
+          "id": 4,
+          "options": {
+            "dedupStrategy": "none",
+            "enableInfiniteScrolling": true,
+            "enableLogDetails": true,
+            "prettifyLogMessage": false,
+            "showCommonLabels": false,
+            "showLabels": false,
+            "showTime": false,
+            "sortOrder": "Descending",
+            "wrapLogMessage": false
+          },
+          "pluginVersion": "12.0.2",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "{job=\"ingress-nginx/controller\"} | pattern `<_> - <_> [<_>] [<_>] <customer>.<environment>.<_> \"<_>\" <_> \"<_>\" \"<_>\" <_> \"<_>\" \"<_>\" <_> <_> [<_>] [<_>] <_> <_> <_> <_> <_>` | label_format varEnvironment=`$environment` | customer = `$name` and (environment = `$environment` or varEnvironment = `production`)",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "nginx",
+          "type": "logs"
+        },
+        {
+          "datasource": {
+            "type": "loki",
+            "uid": "P8E80F9AEF21F6940"
+          },
+          "description": "",
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 13,
+            "w": 24,
+            "x": 0,
+            "y": 12
+          },
+          "id": 2,
+          "options": {
+            "dedupStrategy": "none",
+            "enableInfiniteScrolling": true,
+            "enableLogDetails": true,
+            "prettifyLogMessage": false,
+            "showCommonLabels": false,
+            "showLabels": false,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": false
+          },
+          "pluginVersion": "12.0.2",
+          "targets": [
+            {
+              "datasource": {
+                "type": "loki",
+                "uid": "P8E80F9AEF21F6940"
+              },
+              "direction": "backward",
+              "editorMode": "code",
+              "expr": "{service_name=\"$name-$environment-transferservice-backend\"}\r\n| json\r\n| level=~\"${level}\"\r\n| line_format `\r\n{{- .level}}: {{.logger}}[{{.eventid}}]\r\n  {{Replace .message \"\\n\" \"\\n  \" -1}}\r\n{{- if .exception}}\r\n  {{Replace .exception \"\\n\" \"\\n  \" -1}}\r\n{{- end}} `",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "title": "Transferservice Backend",
+          "type": "logs"
+        }
+      ],
+      "preload": false,
+      "refresh": false,
+      "schemaVersion": 41,
+      "tags": [
+        "Com In"
+      ],
+      "templating": {
+        "list": [
+          {
+            "current": {
+              "text": "production",
+              "value": "production"
+            },
+            "datasource": {
+              "type": "loki",
+              "uid": "P8E80F9AEF21F6940"
+            },
+            "definition": "",
+            "includeAll": false,
+            "name": "environment",
+            "options": [],
+            "query": {
+              "label": "service_name",
+              "refId": "LokiVariableQueryEditor-VariableQuery",
+              "stream": "",
+              "type": 1
+            },
+            "refresh": 1,
+            "regex": "/.*-(.*?)-transferservice-backend/gm",
+            "sort": 5,
+            "type": "query"
+          },
+          {
+            "current": {
+              "text": "c-2911",
+              "value": "c-2911"
+            },
+            "datasource": {
+              "type": "loki",
+              "uid": "P8E80F9AEF21F6940"
+            },
+            "definition": "",
+            "includeAll": false,
+            "name": "name",
+            "options": [],
+            "query": {
+              "label": "service_name",
+              "refId": "LokiVariableQueryEditor-VariableQuery",
+              "stream": "",
+              "type": 1
+            },
+            "refresh": 1,
+            "regex": "/(.*)-$environment-transferservice-backend/gm",
+            "sort": 5,
+            "type": "query"
+          },
+          {
+            "current": {
+              "text": [
+                "Warn",
+                "Error",
+                "Fatal"
+              ],
+              "value": [
+                "WARN",
+                "ERROR",
+                "FATAL"
+              ]
+            },
+            "includeAll": false,
+            "multi": true,
+            "name": "level",
+            "options": [
+              {
+                "selected": false,
+                "text": "Trace",
+                "value": "TRACE"
+              },
+              {
+                "selected": false,
+                "text": "Debug",
+                "value": "DEBUG"
+              },
+              {
+                "selected": false,
+                "text": "Info",
+                "value": "INFO"
+              },
+              {
+                "selected": true,
+                "text": "Warn",
+                "value": "WARN"
+              },
+              {
+                "selected": true,
+                "text": "Error",
+                "value": "ERROR"
+              },
+              {
+                "selected": true,
+                "text": "Fatal",
+                "value": "FATAL"
+              }
+            ],
+            "query": "Trace : TRACE, Debug : DEBUG, Info : INFO, Warn : WARN, Error : ERROR, Fatal : FATAL",
+            "type": "custom"
+          }
+        ]
+      },
+      "time": {
+        "from": "now-30m",
+        "to": "now"
+      },
+      "timepicker": {},
+      "timezone": "",
+      "title": "Transferservice / Logs",
+      "uid": "IQU_bEK4k",
+      "version": 1
+    }
