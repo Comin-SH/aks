@@ -90,6 +90,12 @@ variable "keyvault_name" {
   description = "Name des Azure Key Vaults"
 }
 
+
+variable "SECRET_GRAFANA_ADMIN_PASSWORD" {
+  type = string
+  description = "Wert des Secrets im Key Vault für Grafana Admin"
+}
+
 locals {
   all_aks_users = setunion(var.rbac_reader_group_object_ids, var.rbac_admin_group_object_ids)
 }

@@ -36,5 +36,7 @@ override.tf.json
 .terraformrc
 terraform.rc
 
+# .tfvars files that contain sensitive data
+*.tfvars
 
 .DS_Store

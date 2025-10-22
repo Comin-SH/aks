@@ -10,9 +10,10 @@ resource "helm_release" "argocd" {
   name             = "argocd"
   repository       = "https://argoproj.github.io/argo-helm"
   chart            = "argo-cd"
-  version          = "8.6.4"
+  version          = "9.0.2"
   namespace        = "argocd"
   create_namespace = true
+  #upgrade_install  = true
 
   # Use the values file in the repo (argocd/values.yaml)
 #   values = [
