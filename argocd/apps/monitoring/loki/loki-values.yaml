@@ -14,7 +14,7 @@ loki:
            period: 24h
    storage_config:
      azure:
-      account_name: "blobcitfsprod" # Name of the storage account, see $STORAGE_ACCOUNT_NAME
+      account_name: "lokistorageacct01" # Name of the storage account, see $STORAGE_ACCOUNT_NAME
       container_name: "chunks" # Your actual Azure Blob Storage container name (loki-azure-dev-chunks)
       use_federated_token: true # Use federated token for authentication
    ingester:
@@ -33,7 +33,7 @@ loki:
     storage:
       type: azure
       azure:
-        account_name: "blobcitfsprod" # Name of the storage account, see $STORAGE_ACCOUNT_NAME
+        account_name: "lokistorageacct01" # Name of the storage account, see $STORAGE_ACCOUNT_NAME
         container_name: "ruler" # Your actual Azure Blob Storage container name (loki-azure-dev-ruler)
         use_federated_token: true # Use federated token for authentication
       alertmanager_url: http://prom:9093 # The URL of the Alertmanager to send alerts (Prometheus, Mimir, etc.)
@@ -48,13 +48,13 @@ loki:
         ruler: "ruler" # Your actual Azure Blob Storage container name (loki-azure-dev-ruler)
         # admin: "admin-loki-devrel" # Your actual Azure Blob Storage container name (loki-azure-dev-admin)
       azure:
-        accountName: "blobcitfsprod" # Name of the storage account, see $STORAGE_ACCOUNT_NAME
+        accountName: "lokistorageacct01" # Name of the storage account, see $STORAGE_ACCOUNT_NAME
         useFederatedToken: true # Use federated token for authentication
 
 # Define the Azure workload identity
 serviceAccount:
   annotations:
-    "azure.workload.identity/client-id": "f64c420b-cc5a-45e4-934e-514b0962c461" # Client ID of the Workload Identity (Managed Identity), see $WORKLOAD_IDENTITY_NAME
+    "azure.workload.identity/client-id": "3e93a85d-a5a0-431a-b585-a53c0ffb70fd" # Client ID of the Workload Identity (Managed Identity), see $WORKLOAD_IDENTITY_NAME
   labels:
     "azure.workload.identity/use": "true"
 

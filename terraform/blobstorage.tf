@@ -20,3 +20,15 @@ resource "azurerm_role_assignment" "wi_blob_contrib" {
   role_definition_name = "Storage Blob Data Contributor"
   principal_id         = azurerm_user_assigned_identity.workload_identity.principal_id
   }
+
+resource "azurerm_storage_container" "chunks" {
+  name                  = "chunks"
+  storage_account_id    = azurerm_storage_account.loki.id
+  container_access_type = "private"
+}
+
+resource "azurerm_storage_container" "ruler" {
+  name                  = "ruler"
+  storage_account_id    = azurerm_storage_account.loki.id
+  container_access_type = "private"
+}
