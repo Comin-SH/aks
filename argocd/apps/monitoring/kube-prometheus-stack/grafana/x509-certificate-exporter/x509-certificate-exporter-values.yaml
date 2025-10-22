@@ -1,0 +1,7 @@
+prometheusServiceMonitor:
+  extraLabels:
+    release: kube-prometheus-stack
+
+prometheusRules:
+  extraLabels:
+    release: kube-prometheus-stack  

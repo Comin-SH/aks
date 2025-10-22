@@ -14,8 +14,8 @@ loki:
            period: 24h
    storage_config:
      azure:
-      account_name: "salokiafl"
-      container_name: "chunk" # Your actual Azure Blob Storage container name (loki-azure-dev-chunks)
+      account_name: "blobcitfsprod" # Name of the storage account, see $STORAGE_ACCOUNT_NAME
+      container_name: "chunks" # Your actual Azure Blob Storage container name (loki-azure-dev-chunks)
       use_federated_token: true # Use federated token for authentication
    ingester:
        chunk_encoding: snappy
@@ -33,7 +33,7 @@ loki:
     storage:
       type: azure
       azure:
-        account_name: "salokiafl"
+        account_name: "blobcitfsprod" # Name of the storage account, see $STORAGE_ACCOUNT_NAME
         container_name: "ruler" # Your actual Azure Blob Storage container name (loki-azure-dev-ruler)
         use_federated_token: true # Use federated token for authentication
       alertmanager_url: http://prom:9093 # The URL of the Alertmanager to send alerts (Prometheus, Mimir, etc.)
@@ -44,18 +44,17 @@ loki:
    storage:
       type: azure
       bucketNames:
-        chunks: "chunk" # Your actual Azure Blob Storage container name (loki-azure-dev-chunks)
+        chunks: "chunks" # Your actual Azure Blob Storage container name (loki-azure-dev-chunks)
         ruler: "ruler" # Your actual Azure Blob Storage container name (loki-azure-dev-ruler)
         # admin: "admin-loki-devrel" # Your actual Azure Blob Storage container name (loki-azure-dev-admin)
       azure:
-        accountName: salokiafl
+        accountName: "blobcitfsprod" # Name of the storage account, see $STORAGE_ACCOUNT_NAME
         useFederatedToken: true # Use federated token for authentication
 
 # Define the Azure workload identity
 serviceAccount:
-  name: loki
   annotations:
-    "azure.workload.identity/client-id": "6f207bb7-41a6-4a42-9ad5-6e3d65c77d0a" # The app ID of the Azure AD app
+    "azure.workload.identity/client-id": "f64c420b-cc5a-45e4-934e-514b0962c461" # Client ID of the Workload Identity (Managed Identity), see $WORKLOAD_IDENTITY_NAME
   labels:
     "azure.workload.identity/use": "true"
 
@@ -101,21 +100,21 @@ ruler:
 #      existingSecret: loki-basic-auth
 
 # Since we are using basic auth, we need to pass the username and password to the canary
-lokiCanary:
-  extraArgs:
-    - -pass=$(LOKI_PASS)
-    - -user=$(LOKI_USER)
-  extraEnv:
-    - name: LOKI_PASS
-      valueFrom:
-        secretKeyRef:
-          name: canary-basic-auth
-          key: password
-    - name: LOKI_USER
-      valueFrom:
-        secretKeyRef:
-          name: canary-basic-auth
-          key: username
+# lokiCanary:
+#   extraArgs:
+#     - -pass=$(LOKI_PASS)
+#     - -user=$(LOKI_USER)
+#   extraEnv:
+#     - name: LOKI_PASS
+#       valueFrom:
+#         secretKeyRef:
+#           name: canary-basic-auth
+#           key: password
+#     - name: LOKI_USER
+#       valueFrom:
+#         secretKeyRef:
+#           name: canary-basic-auth
+#           key: username
 
 # Enable minio for storage
 minio:
@@ -135,4 +134,5 @@ singleBinary:
 chunksCache:
   # default is 500MB, with limited memory keep this smaller
   #writebackSizeLimit: 10MB
+  #default: allocatedMemory: 8192
   allocatedMemory: 2048

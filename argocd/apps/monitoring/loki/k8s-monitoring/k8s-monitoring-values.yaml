@@ -1,6 +1,6 @@
 ---
 cluster:
-  name: k8s
+  name: TransferService
 
 destinations:
   - name: loki

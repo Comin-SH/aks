@@ -69,6 +69,27 @@ variable "subscription_id" {
   description = "The subscription id to deploy the resources to."
 }
 
+variable "STORAGE_ACCOUNT_NAME" {
+  type = string
+  description = "Name des Storage Accounts für Loki"
+}
+
+variable "STORAGE_ACCOUNT_LOCATION" {
+  type        = string
+  description = "Standort des Storage Accounts für Loki"
+  default     = "germanywestcentral"
+}
+
+variable "workload_identity_name" {
+  type        = string
+  description = "Name der Workload Identity (User Assigned Managed Identity) für den Zugriff auf den Blob Storage"
+}
+
+variable "keyvault_name" {
+  type = string
+  description = "Name des Azure Key Vaults"
+}
+
 locals {
   all_aks_users = setunion(var.rbac_reader_group_object_ids, var.rbac_admin_group_object_ids)
 }

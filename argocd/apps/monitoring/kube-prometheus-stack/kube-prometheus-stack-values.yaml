@@ -1,0 +1,125 @@
+alertmanager:
+  config:
+    global:
+      resolve_timeout: 5m
+    inhibit_rules:
+      - source_matchers:
+          - 'severity = critical'
+        target_matchers:
+          - 'severity =~ warning|info'
+        equal:
+          - 'namespace'
+          - 'alertname'
+      - source_matchers:
+          - 'severity = warning'
+        target_matchers:
+          - 'severity = info'
+        equal:
+          - 'namespace'
+          - 'alertname'
+      - source_matchers:
+          - 'alertname = InfoInhibitor'
+        target_matchers:
+          - 'severity = info'
+        equal:
+          - 'namespace'
+      - target_matchers:
+          - 'alertname = InfoInhibitor'
+    route:
+      group_by: ['namespace']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 12h
+      receiver: 'Cluster Administrator'
+      routes:
+        - receiver: 'null'
+          matchers:
+            - alertname = "InfoInhibitor"
+    receivers:
+      - name: 'null'
+      # - name: Alert Testing
+      #   msteams_configs:
+      #     - webhook_url: https://comingmbh.webhook.office.com/webhookb2/1c10b937-69be-4ccb-aaa2-f34c2c0fa041@5159fdaa-fc6b-46fc-a28e-8f6a27aa5862/IncomingWebhook/902239611ed3488f93a25571d3f8d2c0/61d6902e-0211-4e42-b492-76560f9a60bb/V2KHdan2fmiACVBjdSTvDa8hobnyUIf0UqvJdZ2tE-z7M1
+      - name: Cluster Administrator
+        msteams_configs:
+          - webhook_url: https://comingmbh.webhook.office.com/webhookb2/1c10b937-69be-4ccb-aaa2-f34c2c0fa041@5159fdaa-fc6b-46fc-a28e-8f6a27aa5862/IncomingWebhook/fbea3897c7e549b5bdf16d9301eab6b8/61d6902e-0211-4e42-b492-76560f9a60bb/V2K7DdmTojsT7EoSOu1eb0E9asdqb4AVMRH15ev8PjnBs1
+    templates:
+      - '/etc/alertmanager/config/*.tmpl'
+
+  configmapReload:
+    enabled: true
+
+crds:
+  upgradeJob:
+    enabled: true
+
+defaultRules:
+  disabled:
+    Watchdog: true
+
+grafana:
+  additionalDataSources: 
+    - name: Loki
+      type: loki
+      url: http://loki-gateway.monitoring
+
+  admin:
+    existingSecret: grafana-admin-credentials
+    userKey: admin-user
+    passwordKey: admin-password
+
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+      - name: 'default'
+        orgId: 1
+        folder: ''
+        type: file
+        disableDeletion: true
+        editable: true
+        options:
+          path: /var/lib/grafana/dashboards/default
+
+  dashboards:
+    default:
+      Certificates Expiration:
+        gnetId: 13922 # https://grafana.com/grafana/dashboards/13922-certificates-expiration-x509-certificate-exporter/
+        revision: 4
+        datasource: Prometheus
+
+  defaultDashboardsTimezone: browser
+
+  extraVolumeMounts:
+    - name: grafana-secrets
+      mountPath: /mnt/grafana-secrets
+      readOnly: true
+
+  extraVolumes:
+    - name: grafana-secrets
+      csi:
+        driver: secrets-store.csi.k8s.io
+        readOnly: true
+        volumeAttributes:
+          secretProviderClass: grafana-admin-credentials
+
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hosts:
+      - grafana.transferservice.comin-cloud.de
+      - grafana.transferservice.comin-cloud.com
+
+kubeApiServer:
+  enabled: false
+
+kubeControllerManager:
+  enabled: false
+
+kubeProxy:
+  service:
+    selector:
+      component: kube-proxy
+
+kubeScheduler:
+  enabled: false
