@@ -60,35 +60,36 @@ serviceAccount:
 
 deploymentMode: Distributed
 
-ingester:
- replicas: 3
- zoneAwareReplication:
-  enabled: false
+## Nur zu Testzwecken deaktiviert
+# ingester:
+#  replicas: 3
+#  zoneAwareReplication:
+#   enabled: false
 
-querier:
- replicas: 3
- maxUnavailable: 2
+# querier:
+#  replicas: 3
+#  maxUnavailable: 2
 
-queryFrontend:
- replicas: 2
- maxUnavailable: 1
+# queryFrontend:
+#  replicas: 2
+#  maxUnavailable: 1
 
-queryScheduler:
- replicas: 2
+# queryScheduler:
+#  replicas: 2
 
-distributor:
- replicas: 3
- maxUnavailable: 2
-compactor:
- replicas: 1
+# distributor:
+#  replicas: 3
+#  maxUnavailable: 2
+# compactor:
+#  replicas: 1
 
-indexGateway:
- replicas: 2
- maxUnavailable: 1
+# indexGateway:
+#  replicas: 2
+#  maxUnavailable: 1
 
-ruler:
- replicas: 1
- maxUnavailable: 1
+# ruler:
+#  replicas: 1
+#  maxUnavailable: 1
 
 
 # This exposes the Loki gateway so it can be written to and queried externaly
