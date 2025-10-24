@@ -14,7 +14,7 @@ resource "azurerm_resource_group" "rg" {
   location = var.resource_group_location
   name     = var.resource_group_name
 
-  tags = local.common_tags
+  
 }
 
 # AKS Cluster Module
@@ -37,7 +37,7 @@ module "aks_cluster" {
 
   local_account_disabled = false
 
-  tags = local.common_tags
+  
 }
 
 # Key Vault Module
@@ -55,7 +55,7 @@ module "key_vault" {
 
   purge_protection_enabled = false  # Für Prod: true
 
-  tags = local.common_tags
+  
 }
 
 # Blob Storage Module
@@ -68,16 +68,7 @@ module "blob_storage" {
   replication_type               = "LRS"
   workload_identity_principal_id = module.key_vault.monitoring_identity_principal_id
 
-  tags = local.common_tags
-}
-
-# Locals
-locals {
-  common_tags = {
-    Environment = "Development"
-    ManagedBy   = "Terraform"
-    Project     = "AKS-Platform"
-  }
+  
 }
 
 # Outputs - aktualisiert für Module

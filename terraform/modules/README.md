@@ -54,7 +54,7 @@ module "aks_cluster" {
   rbac_reader_group_object_ids = var.rbac_reader_group_object_ids
   rbac_admin_group_object_ids  = var.rbac_admin_group_object_ids
 
-  tags = local.common_tags
+  
 }
 
 # Key Vault Modul
@@ -70,7 +70,7 @@ module "key_vault" {
   workload_identity_name = var.workload_identity_name
   oidc_issuer_url        = module.aks_cluster.oidc_issuer_url
 
-  tags = local.common_tags
+  
 }
 
 # Blob Storage Modul
@@ -82,7 +82,7 @@ module "blob_storage" {
   location                       = var.STORAGE_ACCOUNT_LOCATION
   workload_identity_principal_id = module.key_vault.monitoring_identity_principal_id
 
-  tags = local.common_tags
+  
 }
 ```
 
@@ -117,20 +117,6 @@ cd modules/aks-cluster
 terraform init
 terraform validate
 terraform fmt -check
-```
-
-### Tagging Strategy
-Verwende konsistente Tags über alle Module:
-
-```hcl
-locals {
-  common_tags = {
-    Environment = var.environment
-    ManagedBy   = "Terraform"
-    Project     = "AKS-Platform"
-    CostCenter  = var.cost_center
-  }
-}
 ```
 
 ## Migration

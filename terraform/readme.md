@@ -6,13 +6,38 @@ Diese Terraform-Konfiguration erstellt die komplette Azure-Infrastruktur für ei
 
 Die Infrastruktur ist in wiederverwendbare Module aufgeteilt:
 
+### Infrastructure Module
 - **[aks-cluster](./modules/aks-cluster/)**: AKS Cluster mit Node Pools und RBAC
 - **[key-vault](./modules/key-vault/)**: Key Vault, Secrets und Workload Identity  
 - **[blob-storage](./modules/blob-storage/)**: Storage Account für Loki Logs
 
-Siehe [modules/README.md](./modules/README.md) für Details.
+### Bootstrap Module
+- **[bootstrap](./bootstrap/)**: Cluster-Bootstrap nach Infrastruktur-Deployment
+  - ArgoCD Installation via Helm
+  - Grafana Secrets Setup via Azure Key Vault CSI Driver
 
-> ℹ️ **Hinweis**: Die aktuelle Implementierung verwendet noch keine Module. Siehe [MIGRATION.md](./MIGRATION.md) für den Migrations-Guide.
+Siehe [modules/README.md](./modules/README.md) für Infrastructure-Module Details und [bootstrap/README.md](./bootstrap/README.md) für Bootstrap-Details.
+
+## 📂 Struktur
+
+```
+terraform/
+├── main.tf                    # Hauptkonfiguration (Module-Aufrufe)
+├── providers.tf              # Provider-Konfiguration
+├── variables.tf              # Variablen-Deklarationen
+├── outputs.tf                # Outputs
+├── terraform.tfvars          # Konkrete Werte (nicht in Git!)
+├── modules/                  # Wiederverwendbare Infrastructure-Module
+│   ├── aks-cluster/         # AKS Cluster Modul
+│   ├── key-vault/           # Key Vault Modul
+│   └── blob-storage/        # Blob Storage Modul
+└── bootstrap/               # Cluster-Bootstrap (ArgoCD, Monitoring)
+    ├── argocd.tf           # ArgoCD Installation
+    ├── grafana-secrets.tf  # Grafana Secret Provider Class
+    ├── versions.tf         # Provider Requirements
+    ├── variables.tf        # Bootstrap Variables
+    └── outputs.tf          # Bootstrap Outputs
+```
 
 ## Voraussetzung
 - Terraform >= 1.8.0 installiert
@@ -127,15 +152,39 @@ Details zu Azure RBAC: https://learn.microsoft.com/en-us/azure/aks/manage-azure-
 
 
 
-## Installation von Argo CD
-Es wird zu diesem Stand darauf verzichtet Argo CD mittels Terraform bereitzustellen, stattdessen wird dieser Schritt einmalig manuell für das Cluster ausgeführt
+## Installation von ArgoCD
 
-Begründung:
-- bei der Bereitstellung mittels Terraform müsste auch Updates für Argo CD mittels Terraform durchgeführt werden, dies wird als unpraktisch bewertet
-- eine Aktualisierung von ArgoCD nachträglich über andere Mittel, würde zu einem Versionsunterschied zwischen Terraform und Realität führen
-- bei einer manuellen Installation von ArgoCD kann sich dies nach der Bereitstellung selbst aktualisieren und verwalten
+ArgoCD wird jetzt automatisch über das **Bootstrap-Modul** installiert:
 
-**Weitere Schritte im Ordner argocd**
+```bash
+# Nach terraform apply ist ArgoCD bereits installiert
+terraform apply
+
+# Prüfe ArgoCD Installation
+kubectl get pods -n argocd
+
+# Port-Forward für ArgoCD UI (optional)
+kubectl port-forward svc/argocd-server -n argocd 8080:443
+
+# Initial Admin Password abrufen
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+```
+
+### Was wird durch Bootstrap installiert?
+
+1. **ArgoCD Helm Chart** (Version 9.0.2)
+   - Namespace: `argocd`
+   - Automatisch via Helm deployed
+
+2. **App of Apps Pattern**
+   - Automatisch die apps-of-apps Application erstellt
+   - GitOps-basiertes Management aller weiteren Applications
+
+3. **Grafana Secrets Setup**
+   - SecretProviderClass für Azure Key Vault Integration
+   - Kubernetes Secret für Grafana Admin-Credentials
+
+**Weitere Schritte im Ordner [argocd](../argocd/)**
 
 ## Variablen können in einer terraform.tfvars angegeben werden, diese werden aber nicht mittels Git synchronisiert, da sie sensitive Dateien enthalten können
 # Beispiel

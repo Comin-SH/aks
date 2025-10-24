@@ -10,8 +10,8 @@ resource "local_file" "grafana_secret_provider_class" {
       provider: azure
       parameters:
         usePodIdentity: "false"
-        clientID: ${azurerm_user_assigned_identity.monitoring.client_id}
-        keyvaultName: ${azurerm_key_vault.kv.name}
+        clientID: ${var.monitoring_identity_client_id}
+        keyvaultName: ${var.key_vault_name}
         objects: |
           array:
             - |
@@ -20,7 +20,7 @@ resource "local_file" "grafana_secret_provider_class" {
             - |
               objectName: grafana-admin-password
               objectType: secret
-        tenantId: ${data.azurerm_client_config.current.tenant_id}
+        tenantId: ${var.tenant_id}
       secretObjects:
       - data:
         - key: admin-user
@@ -31,7 +31,7 @@ resource "local_file" "grafana_secret_provider_class" {
         type: Opaque
   YAML
 
-  filename = "${path.root}/../argocd/apps/monitoring/kube-prometheus-stack/grafana/admin-credentials/secret-provider-class.yaml"
+  filename = "${path.root}/../argocd/applications/monitoring/kube-prometheus-stack/grafana/admin-credentials/secret-provider-class.yaml"
 }
 
 # SecretProviderClass im Cluster erstellen
@@ -40,7 +40,6 @@ resource "kubectl_manifest" "grafana_secret_provider_class" {
 
   depends_on = [
     helm_release.argocd,
-    azurerm_user_assigned_identity.monitoring,
-    azurerm_federated_identity_credential.grafana
+    var.key_vault_id
   ]
 }
