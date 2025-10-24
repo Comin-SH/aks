@@ -1,4 +1,5 @@
-# Lokale YAML-Datei generieren
+# Lokale YAML-Datei generieren für ArgoCD
+# Die Datei wird von ArgoCD deployed, wenn der monitoring Namespace existiert
 resource "local_file" "grafana_secret_provider_class" {
   content = <<-YAML
     apiVersion: secrets-store.csi.x-k8s.io/v1
@@ -34,12 +35,6 @@ resource "local_file" "grafana_secret_provider_class" {
   filename = "${path.root}/../argocd/applications/monitoring/kube-prometheus-stack/grafana/admin-credentials/secret-provider-class.yaml"
 }
 
-# SecretProviderClass im Cluster erstellen
-resource "kubectl_manifest" "grafana_secret_provider_class" {
-  yaml_body = local_file.grafana_secret_provider_class.content
-
-  depends_on = [
-    helm_release.argocd,
-    var.key_vault_id
-  ]
-}
+# HINWEIS: Die SecretProviderClass wird NICHT direkt von Terraform deployed,
+# sondern über ArgoCD, da der monitoring Namespace erst von ArgoCD erstellt wird.
+# Die YAML-Datei wird im Git-Repo abgelegt und von ArgoCD synchronisiert.
