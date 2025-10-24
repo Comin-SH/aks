@@ -104,7 +104,7 @@ grafana:
           secretProviderClass: grafana-admin-credentials
 
   ingress:
-    enabled: true
+    enabled: false # zu Testzwecken deaktiviert
     ingressClassName: nginx
     # hosts:
     #   - grafana.transferservice.comin-cloud.de
