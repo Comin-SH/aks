@@ -1,0 +1,21 @@
+# Copy this file to terraform.tfvars (ignored) and fill in your environment-specific values.
+
+# resource_group_location = "germanywestcentral"
+# resource_group_name     = "k8s-rg"
+# agent_pool_node_count   = 1
+# agent_pool_vm_size      = "Standard_D2as_v5"
+# user_pool_vm_size       = "Standard_D2as_v5"
+# user_pool_node_count    = 1
+# cluster_name            = "k8s"
+# dns_prefix              = "k8s"
+# admin_group_object_ids  = []
+# rbac_reader_group_object_ids = []
+# rbac_admin_group_object_ids  = []
+
+# subscription_id = ""
+
+# STORAGE_ACCOUNT_NAME     = ""
+# STORAGE_ACCOUNT_LOCATION = "germanywestcentral"
+# workload_identity_name   = ""
+# keyvault_name            = ""
+# SECRET_GRAFANA_ADMIN_PASSWORD = ""

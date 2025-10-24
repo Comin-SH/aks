@@ -16,7 +16,7 @@ variable "agent_pool_node_count" {
   default     = 1
 }
 
-variable "agent_pool-vm_size" {
+variable "agent_pool_vm_size" {
   type        = string
   description = "The vm size of the agentpool nodes."
   default     = "Standard_D2as_v5"
@@ -28,7 +28,7 @@ variable "user_pool_node_count" {
   default     = 1
 }
 
-variable "user_pool-vm_size" {
+variable "user_pool_vm_size" {
   type        = string
   description = "The vm size of the agentpool nodes."
   default     = "Standard_D2as_v5"
@@ -49,7 +49,7 @@ variable "dns_prefix" {
 variable "admin_group_object_ids" {
   description = "aks admin group ids"
   type        = list(string)
-  default     =  []
+  default     = []
 }
 
 variable "rbac_reader_group_object_ids" {
@@ -70,7 +70,7 @@ variable "subscription_id" {
 }
 
 variable "STORAGE_ACCOUNT_NAME" {
-  type = string
+  type        = string
   description = "Name des Storage Accounts für Loki"
 }
 
@@ -86,13 +86,13 @@ variable "workload_identity_name" {
 }
 
 variable "keyvault_name" {
-  type = string
+  type        = string
   description = "Name des Azure Key Vaults"
 }
 
 
 variable "SECRET_GRAFANA_ADMIN_PASSWORD" {
-  type = string
+  type        = string
   description = "Wert des Secrets im Key Vault für Grafana Admin"
 }
 
