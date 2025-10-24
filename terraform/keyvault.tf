@@ -7,6 +7,7 @@ resource "azurerm_key_vault" "kv" {
   sku_name            = "standard"
   # >>> schaltet auf Azure RBAC um (statt Access Policies)
   rbac_authorization_enabled = true
+  purge_protection_enabled    = false  # Für Test-Umgebungen
 }
 
 # Angemeldeten Benutzer (aktueller Azure-Account) ermitteln
@@ -23,12 +24,20 @@ resource "azurerm_key_vault_secret" "grafana-admin-user" {
   name         = "grafana-admin-user"
   value        = "admin"
   key_vault_id = azurerm_key_vault.kv.id
+  depends_on = [ azurerm_role_assignment.kv_admin_user ]
+  lifecycle {
+    ignore_changes = [value]
+  }
 }
 
 resource "azurerm_key_vault_secret" "grafana-admin-password" {
   name         = "grafana-admin-password"
   value        = var.SECRET_GRAFANA_ADMIN_PASSWORD
   key_vault_id = azurerm_key_vault.kv.id
+  depends_on = [ azurerm_role_assignment.kv_admin_user ]
+  lifecycle {
+    ignore_changes = [value]
+  }
 }
 
 # Federated Credential: entspricht 2.2. Service Account f�r Loki mit Workload Identity verkn�pfen, entspricht:
