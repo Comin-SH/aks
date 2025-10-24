@@ -1,105 +1,80 @@
+# Data Sources
+data "azurerm_client_config" "current" {}
+
+# Resource Group
 resource "azurerm_resource_group" "rg" {
   location = var.resource_group_location
   name     = var.resource_group_name
+
+  
 }
 
+# AKS Cluster Module
+module "aks_cluster" {
+  source = "./modules/aks-cluster"
 
-## Dieser Abschnitt würde eine neue Azure AD Gruppe erstellen,
-## wird aber hier nicht benötigt, da die Gruppen extern verwaltet werden.
-## assignable_to_role kann nicht gesetzt werden ohne Rolle Privileged Role Administrator
-
-# resource "azuread_group" "aks_admins" {
-#   display_name       = var.admin_group_name
-#   security_enabled   = true
-#   assignable_to_role = true
-#   description        = "Admin group for managing the AKS cluster"
-# }
-
-resource "azurerm_kubernetes_cluster" "k8s" {
   location            = azurerm_resource_group.rg.location
-  name                = var.cluster_name
+  cluster_name        = var.cluster_name
   resource_group_name = azurerm_resource_group.rg.name
   dns_prefix          = var.dns_prefix
-  # Lokaler Account erstmal aktiviert, damit Argo CD mittels Helm installiert werden kann
+
+  agent_pool_vm_size    = var.agent_pool_vm_size
+  agent_pool_node_count = var.agent_pool_node_count
+  user_pool_vm_size     = var.user_pool_vm_size
+  user_pool_node_count  = var.user_pool_node_count
+
+  admin_group_object_ids       = var.admin_group_object_ids
+  rbac_reader_group_object_ids = var.rbac_reader_group_object_ids
+  rbac_admin_group_object_ids  = var.rbac_admin_group_object_ids
+
   local_account_disabled = false
 
-  # Die Workload Identity wird später von Grafana für den Zugriff auf den Key Vault und von Loki für den Zugriff auf den Blob Storage benötigt.
-  oidc_issuer_enabled       = true
-  workload_identity_enabled = true
-
-  # Wird benötigt als Storage für Loki
-  storage_profile {
-    blob_driver_enabled = true
-  }
-
-
-  key_vault_secrets_provider {
-    # Default-Wert gem. Dokumentation --> https://learn.microsoft.com/en-us/azure/aks/csi-secrets-store-configuration-options
-    secret_rotation_interval = "2m" 
-  }
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  azure_active_directory_role_based_access_control {
-    admin_group_object_ids = var.admin_group_object_ids
-    azure_rbac_enabled     = true
-  }
-
-  default_node_pool {
-    name       = "agentpool"
-    vm_size    = var.agent_pool_vm_size
-    node_count = var.agent_pool_node_count
-    temporary_name_for_rotation = "agentpooltmp" # Nur für Rotation
-    upgrade_settings {
-      # Wert gesetzt, damit er nicht bei jedem terraform apply das Cluster verändern will. Weitere Infos: https://github.com/hashicorp/terraform-provider-azurerm/issues/24020
-      max_surge = "10%"
-    }
-  }
-  network_profile {
-    network_plugin    = "kubenet"
-    load_balancer_sku = "standard"
-  }
+  
 }
 
-resource "azurerm_kubernetes_cluster_node_pool" "userpool" {
-  name                  = "userpool"
-  kubernetes_cluster_id = azurerm_kubernetes_cluster.k8s.id
-  vm_size               = var.user_pool_vm_size
-  node_count            = var.user_pool_node_count
-  temporary_name_for_rotation = "userpooltmp" # Nur für Rotation
-  upgrade_settings {
-    # Wert gesetzt, damit er nicht bei jedem terraform apply das Cluster verändern will. Weitere Infos: https://github.com/hashicorp/terraform-provider-azurerm/issues/24020
-    max_surge = "10%"
-  }
+# Key Vault Module
+module "key_vault" {
+  source = "./modules/key-vault"
+
+  keyvault_name          = var.keyvault_name
+  resource_group_name    = azurerm_resource_group.rg.name
+  location               = azurerm_resource_group.rg.location
+  tenant_id              = data.azurerm_client_config.current.tenant_id
+  admin_principal_id     = data.azurerm_client_config.current.object_id
+  grafana_admin_password = var.SECRET_GRAFANA_ADMIN_PASSWORD
+  workload_identity_name = var.workload_identity_name
+  oidc_issuer_url        = module.aks_cluster.oidc_issuer_url
+
+  purge_protection_enabled = false # Für Produktion: true
+
+  
 }
 
-resource "azurerm_role_assignment" "cluster_user" {
-  for_each             = toset(local.all_aks_users)
-  scope                = azurerm_kubernetes_cluster.k8s.id
-  role_definition_name = "Azure Kubernetes Service Cluster User Role"
-  principal_id         = each.value
+# Blob Storage Module
+module "blob_storage" {
+  source = "./modules/blob-storage"
+
+  storage_account_name           = var.STORAGE_ACCOUNT_NAME
+  resource_group_name            = azurerm_resource_group.rg.name
+  location                       = var.STORAGE_ACCOUNT_LOCATION
+  replication_type               = "LRS"
+  workload_identity_principal_id = module.key_vault.monitoring_identity_principal_id
+
+  
 }
 
-resource "azurerm_role_assignment" "rbac_reader" {
-  for_each             = toset(var.rbac_reader_group_object_ids)
-  scope                = azurerm_kubernetes_cluster.k8s.id
-  role_definition_name = "Azure Kubernetes Service RBAC Reader"
-  principal_id         = each.value
-}
+# Bootstrap Module (ArgoCD, Monitoring Setup)
+module "bootstrap" {
+  source = "./bootstrap"
 
-resource "azurerm_role_assignment" "admin" {
-  for_each             = toset(var.rbac_admin_group_object_ids)
-  scope                = azurerm_kubernetes_cluster.k8s.id
-  role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
-  principal_id         = each.value
-}
+  aks_cluster_id                = module.aks_cluster.cluster_id
+  monitoring_identity_client_id = module.key_vault.monitoring_identity_client_id
+  key_vault_name                = module.key_vault.key_vault_name
+  key_vault_id                  = module.key_vault.key_vault_id
+  tenant_id                     = data.azurerm_client_config.current.tenant_id
 
-# ------------------------
-# Warten bis API erreichbar
-# ------------------------
-# resource "time_sleep" "wait_for_api" {
-#   depends_on      = [azurerm_kubernetes_cluster.k8s]
-#   create_duration = "30s"
-# }
+  depends_on = [
+    module.aks_cluster,
+    module.key_vault
+  ]
+}

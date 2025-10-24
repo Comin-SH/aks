@@ -2,10 +2,10 @@ terraform {
   required_version = ">=1.8.0"
 
   backend "azurerm" {
-      resource_group_name  = "tfstate"
-      storage_account_name = "cidevttfstate18738"
-      container_name       = "tfstate"
-      key                  = "terraform.tfstate"
+    resource_group_name  = "tfstate"
+    storage_account_name = "cidevttfstate18738"
+    container_name       = "tfstate"
+    key                  = "terraform.tfstate"
   }
 
   # Warum ~> x.0? Du bekommst automatisch Patches & Minor-Fixes, aber keine Major-Sprünge (Breaking Changes).
@@ -40,18 +40,18 @@ provider "azurerm" {
 }
 
 provider "kubectl" {
-  host                   = azurerm_kubernetes_cluster.k8s.kube_admin_config[0].host
-  client_certificate     = base64decode(azurerm_kubernetes_cluster.k8s.kube_admin_config[0].client_certificate)
-  client_key             = base64decode(azurerm_kubernetes_cluster.k8s.kube_admin_config[0].client_key)
-  cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.k8s.kube_admin_config[0].cluster_ca_certificate)
+  host                   = module.aks_cluster.host
+  client_certificate     = base64decode(module.aks_cluster.client_certificate)
+  client_key             = base64decode(module.aks_cluster.client_key)
+  cluster_ca_certificate = base64decode(module.aks_cluster.cluster_ca_certificate)
   load_config_file       = false
 }
 
 provider "helm" {
   kubernetes = {
-    host                   = azurerm_kubernetes_cluster.k8s.kube_admin_config[0].host
-    client_certificate     = base64decode(azurerm_kubernetes_cluster.k8s.kube_admin_config[0].client_certificate)
-    client_key             = base64decode(azurerm_kubernetes_cluster.k8s.kube_admin_config[0].client_key)
-    cluster_ca_certificate = base64decode(azurerm_kubernetes_cluster.k8s.kube_admin_config[0].cluster_ca_certificate)
+    host                   = module.aks_cluster.host
+    client_certificate     = base64decode(module.aks_cluster.client_certificate)
+    client_key             = base64decode(module.aks_cluster.client_key)
+    cluster_ca_certificate = base64decode(module.aks_cluster.cluster_ca_certificate)
   }
 }
