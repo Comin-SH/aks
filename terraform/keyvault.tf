@@ -70,6 +70,6 @@ resource "azurerm_federated_identity_credential" "grafana" {
   name                = "monitoring-grafana"
   parent_id           = azurerm_user_assigned_identity.monitoring.id
   issuer              = azurerm_kubernetes_cluster.k8s.oidc_issuer_url
-  subject             = "system:serviceaccount:monitoring:kube-prometheus-stack-grafana"
+  subject             = "system:serviceaccount:monitoring:monitoring-grafana"
   audience            = ["api://AzureADTokenExchange"]
 }
