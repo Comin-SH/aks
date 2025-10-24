@@ -12,6 +12,54 @@
 - Notwendige Anpassungen NUR in terraform.tfvars durchführen, Default Werte sieht man in variables.tf
 - admin_group_object_ids und rbac_reader_group_object_ids können mit der Object ID von Entra ID Gruppen befüllt werden, so dass Mitglieder dieser Gruppe entsprechend lesenden oder administrativen Zugriff auf das Kubernetes Cluster bekommen
 
+### Speichern des Terraform States in einem Azure Storage Account
+Terraform benötigt eine zentrale Datei (terraform.tfstate), in der der tatsächliche Zustand deiner Infrastruktur liegt.
+Diese Datei sollte niemals lokal oder im Git-Repo gespeichert werden, sondern in einem Remote Backend, das folgende Eigenschaften hat:
+
+- Versionskontrolle (wer hat wann was geändert)
+- Locking (damit keine zwei Nutzer gleichzeitig „apply“ ausführen)
+- Zugriffskontrolle (RBAC)
+- Sicheres Backup
+
+⚠️ Warum du den Terraform-State nicht im Git speichern solltest
+1️⃣ Der State enthält geheime Daten (Secrets, Keys, Passwörter)
+Der Terraform-State speichert nicht nur Ressourcen-IDs, sondern den kompletten aktuellen Zustand — inklusive aller Attribute, die Terraform über deine Infrastruktur kennt.
+In Blob Storage wird alles automatisch verschlüsselt und gelockt, wenn jemand terraform apply ausführt.
+
+Quelle: https://learn.microsoft.com/en-us/azure/developer/terraform/store-state-in-azure-storage?tabs=azure-cli
+Der Blob-Storage wird manuell vorab erstellt. In Zukunft wäre es möglich dies ebenfalls über ein eigenes Terraform Deployment durchzuführen.
+
+## Notwendige Schritte:
+```
+#!/bin/bash
+
+RESOURCE_GROUP_NAME=tfstate
+STORAGE_ACCOUNT_NAME=cidevttfstate$RANDOM
+CONTAINER_NAME=tfstate$
+
+# Create resource group
+az group create --name $RESOURCE_GROUP_NAME --location germanywestcentral
+
+# Create storage account
+az storage account create --resource-group $RESOURCE_GROUP_NAME --name $STORAGE_ACCOUNT_NAME --sku Standard_LRS --encryption-services blob
+
+# Create blob container
+az storage container create --name $CONTAINER_NAME --account-name $STORAGE_ACCOUNT_NAME
+
+# Configure terraform backend state
+ACCOUNT_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP_NAME --account-name $STORAGE_ACCOUNT_NAME --query '[0].value' -o tsv)
+export ARM_ACCESS_KEY=$ACCOUNT_KEY
+```
+Folgende Informationen müssen dann in providers.tf gepflegt werden:
+```
+  backend "azurerm" {
+      resource_group_name  = "tfstate"
+      storage_account_name = "<storage_account_name>"
+      container_name       = "tfstate"
+      key                  = "terraform.tfstate"
+  }
+```
+
 
 ### Schritte
 1. Als erstes Mittels "az login" anmelden und korrekte Subscription auswählen. Mit dem zweiten Befehl kann geprüft werden, ob korrekte Subscription ausgewählt ist.
@@ -71,5 +119,28 @@ Begründung:
 
 **Weitere Schritte im Ordner argocd**
 
+## Variablen können in einer terraform.tfvars angegeben werden, diese werden aber nicht mittels Git synchronisiert, da sie sensitive Dateien enthalten können
+# Beispiel
+```
+# resource_group_location = "germanywestcentral"
+# resource_group_name     = "k8s-rg"
+# agent_pool_node_count   = 1
+# agent_pool_vm_size      = "Standard_D2as_v5"
+# user_pool_vm_size       = "Standard_D2as_v5"
+# user_pool_node_count    = 1
+# cluster_name            = "k8s"
+# dns_prefix              = "k8s"
+# admin_group_object_ids  = []
+# rbac_reader_group_object_ids = []
+# rbac_admin_group_object_ids  = []
 
+# subscription_id = ""
 
+# STORAGE_ACCOUNT_NAME     = ""
+# STORAGE_ACCOUNT_LOCATION = "germanywestcentral"
+# workload_identity_name   = ""
+# keyvault_name            = ""
+# SECRET_GRAFANA_ADMIN_PASSWORD = ""
+```
+
+Hinweis: Speichere deine produktive Konfiguration als `terraform.tfvars` (wird durch `.gitignore` ausgeschlossen) oder übergib sie per `-var-file`.

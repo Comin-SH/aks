@@ -16,24 +16,25 @@ resource "azurerm_resource_group" "rg" {
 # }
 
 resource "azurerm_kubernetes_cluster" "k8s" {
-  location               = azurerm_resource_group.rg.location
-  name                   = var.cluster_name
-  resource_group_name    = azurerm_resource_group.rg.name
-  dns_prefix             = var.dns_prefix
+  location            = azurerm_resource_group.rg.location
+  name                = var.cluster_name
+  resource_group_name = azurerm_resource_group.rg.name
+  dns_prefix          = var.dns_prefix
   # Lokaler Account erstmal aktiviert, damit Argo CD mittels Helm installiert werden kann
   local_account_disabled = false
 
   # Die Workload Identity wird später von Grafana für den Zugriff auf den Key Vault und von Loki für den Zugriff auf den Blob Storage benötigt.
-  oidc_issuer_enabled      = true
+  oidc_issuer_enabled       = true
   workload_identity_enabled = true
 
   # Wird benötigt als Storage für Loki
   storage_profile {
-    blob_driver_enabled     = true
+    blob_driver_enabled = true
   }
 
 
   key_vault_secrets_provider {
+    # Default-Wert gem. Dokumentation --> https://learn.microsoft.com/en-us/azure/aks/csi-secrets-store-configuration-options
     secret_rotation_interval = "2m" 
   }
 
@@ -48,8 +49,12 @@ resource "azurerm_kubernetes_cluster" "k8s" {
 
   default_node_pool {
     name       = "agentpool"
-    vm_size    = var.agent_pool-vm_size
+    vm_size    = var.agent_pool_vm_size
     node_count = var.agent_pool_node_count
+    upgrade_settings {
+      # Wert gesetzt, damit er nicht bei jedem terraform apply das Cluster verändern will. Weitere Infos: https://github.com/hashicorp/terraform-provider-azurerm/issues/24020
+      max_surge = "10%"
+    }
   }
   network_profile {
     network_plugin    = "kubenet"
@@ -60,29 +65,33 @@ resource "azurerm_kubernetes_cluster" "k8s" {
 resource "azurerm_kubernetes_cluster_node_pool" "userpool" {
   name                  = "userpool"
   kubernetes_cluster_id = azurerm_kubernetes_cluster.k8s.id
-  vm_size               = var.user_pool-vm_size
+  vm_size               = var.user_pool_vm_size
   node_count            = var.user_pool_node_count
+  upgrade_settings {
+    # Wert gesetzt, damit er nicht bei jedem terraform apply das Cluster verändern will. Weitere Infos: https://github.com/hashicorp/terraform-provider-azurerm/issues/24020
+    max_surge = "10%"
+  }
 }
 
 resource "azurerm_role_assignment" "cluster_user" {
-  for_each = toset(local.all_aks_users)
-  scope = azurerm_kubernetes_cluster.k8s.id
+  for_each             = toset(local.all_aks_users)
+  scope                = azurerm_kubernetes_cluster.k8s.id
   role_definition_name = "Azure Kubernetes Service Cluster User Role"
-  principal_id = each.value
+  principal_id         = each.value
 }
 
 resource "azurerm_role_assignment" "rbac_reader" {
-  for_each = toset(var.rbac_reader_group_object_ids)
-  scope = azurerm_kubernetes_cluster.k8s.id
+  for_each             = toset(var.rbac_reader_group_object_ids)
+  scope                = azurerm_kubernetes_cluster.k8s.id
   role_definition_name = "Azure Kubernetes Service RBAC Reader"
-  principal_id = each.value
+  principal_id         = each.value
 }
 
 resource "azurerm_role_assignment" "admin" {
-  for_each = toset(var.rbac_admin_group_object_ids)
-  scope = azurerm_kubernetes_cluster.k8s.id
+  for_each             = toset(var.rbac_admin_group_object_ids)
+  scope                = azurerm_kubernetes_cluster.k8s.id
   role_definition_name = "Azure Kubernetes Service RBAC Cluster Admin"
-  principal_id = each.value
+  principal_id         = each.value
 }
 
 # ------------------------

@@ -1,10 +1,10 @@
 # Install ArgoCD via Helm and apply apps-of-apps + repository manifests
 
 # Ensure we can fetch kubeconfig for the cluster created in this repo
-data "azurerm_kubernetes_cluster" "aks" {
-  name                = azurerm_kubernetes_cluster.k8s.name
-  resource_group_name = azurerm_resource_group.rg.name
-}
+# data "azurerm_kubernetes_cluster" "aks" {
+#   name                = azurerm_kubernetes_cluster.k8s.name
+#   resource_group_name = azurerm_resource_group.rg.name
+# }
 
 resource "helm_release" "argocd" {
   name             = "argocd"
@@ -16,15 +16,15 @@ resource "helm_release" "argocd" {
   #upgrade_install  = true
 
   # Use the values file in the repo (argocd/values.yaml)
-#   values = [
-#     file("${path.root}/../argocd/values.yaml")
-#   ]
+  #   values = [
+  #     file("${path.root}/../argocd/values.yaml")
+  #   ]
 
   depends_on = [
     azurerm_kubernetes_cluster.k8s
   ]
 
-    # depends_on = [time_sleep.wait_for_api]
+  # depends_on = [time_sleep.wait_for_api]
 }
 
 # # Apply the repository ConfigMap so ArgoCD knows the public GitHub repo
