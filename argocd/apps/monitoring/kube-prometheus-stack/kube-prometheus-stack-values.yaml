@@ -106,9 +106,9 @@ grafana:
   ingress:
     enabled: true
     ingressClassName: nginx
-    hosts:
-      - grafana.transferservice.comin-cloud.de
-      - grafana.transferservice.comin-cloud.com
+    # hosts:
+    #   - grafana.transferservice.comin-cloud.de
+    #   - grafana.transferservice.comin-cloud.com
 
 kubeApiServer:
   enabled: false
