@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: 'https://github.com/Comin-SH/aks.git'
     targetRevision: HEAD
-    path: argocd/apps
+    path: argocd/applications
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: argocd

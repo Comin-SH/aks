@@ -1,11 +1,29 @@
-### Voraussetzung
-- Terraform installiert
+# Terraform Infrastructure für AKS
+
+Diese Terraform-Konfiguration erstellt die komplette Azure-Infrastruktur für ein produktionsreifes AKS-Cluster.
+
+## 📦 Module
+
+Die Infrastruktur ist in wiederverwendbare Module aufgeteilt:
+
+- **[aks-cluster](./modules/aks-cluster/)**: AKS Cluster mit Node Pools und RBAC
+- **[key-vault](./modules/key-vault/)**: Key Vault, Secrets und Workload Identity  
+- **[blob-storage](./modules/blob-storage/)**: Storage Account für Loki Logs
+
+Siehe [modules/README.md](./modules/README.md) für Details.
+
+> ℹ️ **Hinweis**: Die aktuelle Implementierung verwendet noch keine Module. Siehe [MIGRATION.md](./MIGRATION.md) für den Migrations-Guide.
+
+## Voraussetzung
+- Terraform >= 1.8.0 installiert
 - Azure CLI installiert
 - kubectl installiert
 - kubelogin installiert
 
-- letzen beiden Punkten können mit folgenden Code installiert werden
-`az aks install-cli`
+Die letzten beiden Punkte können mit folgendem Code installiert werden:
+```bash
+az aks install-cli
+```
 
 ### Vorbereitung
 - Github Repo herunterladen

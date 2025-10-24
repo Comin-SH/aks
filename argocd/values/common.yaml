@@ -1,0 +1,23 @@
+# Gemeinsame Werte für alle ArgoCD Applications
+
+# Repository Configuration
+repository:
+  url: https://github.com/Comin-SH/aks.git
+  targetRevision: HEAD
+
+# Default Sync Policy
+syncPolicy:
+  automated:
+    prune: true
+    selfHeal: true
+  syncOptions:
+    - CreateNamespace=true
+
+# Common Labels
+commonLabels:
+  managedBy: argocd
+  project: aks-platform
+
+# Common Annotations
+commonAnnotations:
+  argocd.argoproj.io/sync-wave: "0"

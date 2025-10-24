@@ -1,27 +1,10 @@
-resource "azurerm_resource_group" "rg" {
-  location = var.resource_group_location
-  name     = var.resource_group_name
-}
-
-
-## Dieser Abschnitt würde eine neue Azure AD Gruppe erstellen,
-## wird aber hier nicht benötigt, da die Gruppen extern verwaltet werden.
-## assignable_to_role kann nicht gesetzt werden ohne Rolle Privileged Role Administrator
-
-# resource "azuread_group" "aks_admins" {
-#   display_name       = var.admin_group_name
-#   security_enabled   = true
-#   assignable_to_role = true
-#   description        = "Admin group for managing the AKS cluster"
-# }
-
 resource "azurerm_kubernetes_cluster" "k8s" {
-  location            = azurerm_resource_group.rg.location
+  location            = var.location
   name                = var.cluster_name
-  resource_group_name = azurerm_resource_group.rg.name
+  resource_group_name = var.resource_group_name
   dns_prefix          = var.dns_prefix
   # Lokaler Account erstmal aktiviert, damit Argo CD mittels Helm installiert werden kann
-  local_account_disabled = false
+  local_account_disabled = var.local_account_disabled
 
   # Die Workload Identity wird später von Grafana für den Zugriff auf den Key Vault und von Loki für den Zugriff auf den Blob Storage benötigt.
   oidc_issuer_enabled       = true
@@ -32,10 +15,9 @@ resource "azurerm_kubernetes_cluster" "k8s" {
     blob_driver_enabled = true
   }
 
-
   key_vault_secrets_provider {
     # Default-Wert gem. Dokumentation --> https://learn.microsoft.com/en-us/azure/aks/csi-secrets-store-configuration-options
-    secret_rotation_interval = "2m" 
+    secret_rotation_interval = "2m"
   }
 
   identity {
@@ -48,31 +30,36 @@ resource "azurerm_kubernetes_cluster" "k8s" {
   }
 
   default_node_pool {
-    name       = "agentpool"
-    vm_size    = var.agent_pool_vm_size
-    node_count = var.agent_pool_node_count
+    name                        = "agentpool"
+    vm_size                     = var.agent_pool_vm_size
+    node_count                  = var.agent_pool_node_count
     temporary_name_for_rotation = "agentpooltmp" # Nur für Rotation
     upgrade_settings {
       # Wert gesetzt, damit er nicht bei jedem terraform apply das Cluster verändern will. Weitere Infos: https://github.com/hashicorp/terraform-provider-azurerm/issues/24020
       max_surge = "10%"
     }
   }
+
   network_profile {
     network_plugin    = "kubenet"
     load_balancer_sku = "standard"
   }
+
+  tags = var.tags
 }
 
 resource "azurerm_kubernetes_cluster_node_pool" "userpool" {
-  name                  = "userpool"
-  kubernetes_cluster_id = azurerm_kubernetes_cluster.k8s.id
-  vm_size               = var.user_pool_vm_size
-  node_count            = var.user_pool_node_count
+  name                        = "userpool"
+  kubernetes_cluster_id       = azurerm_kubernetes_cluster.k8s.id
+  vm_size                     = var.user_pool_vm_size
+  node_count                  = var.user_pool_node_count
   temporary_name_for_rotation = "userpooltmp" # Nur für Rotation
   upgrade_settings {
     # Wert gesetzt, damit er nicht bei jedem terraform apply das Cluster verändern will. Weitere Infos: https://github.com/hashicorp/terraform-provider-azurerm/issues/24020
     max_surge = "10%"
   }
+
+  tags = var.tags
 }
 
 resource "azurerm_role_assignment" "cluster_user" {
@@ -96,10 +83,6 @@ resource "azurerm_role_assignment" "admin" {
   principal_id         = each.value
 }
 
-# ------------------------
-# Warten bis API erreichbar
-# ------------------------
-# resource "time_sleep" "wait_for_api" {
-#   depends_on      = [azurerm_kubernetes_cluster.k8s]
-#   create_duration = "30s"
-# }
+locals {
+  all_aks_users = setunion(var.rbac_reader_group_object_ids, var.rbac_admin_group_object_ids)
+}
