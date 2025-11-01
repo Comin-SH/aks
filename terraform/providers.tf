@@ -23,10 +23,15 @@ terraform {
       version = "~> 3.0"
     }
     # Es wurde ein alternativer kubectl Provider von Alek C gewählt, da dieser die Erstellung des Clusters und Kubernetes Ressourcen mit einem Apply ermöglicht.
-    kubectl = {
-      source  = "alekc/kubectl"
+    # kubectl = {
+    #   source  = "alekc/kubectl"
+    #   version = ">= 2.0"
+    # }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
       version = ">= 2.0"
     }
+
     local = {
       source  = "hashicorp/local"
       version = "~> 2.0"
@@ -39,12 +44,11 @@ provider "azurerm" {
   subscription_id = var.subscription_id
 }
 
-provider "kubectl" {
-  host                   = module.aks_cluster.host
-  client_certificate     = base64decode(module.aks_cluster.client_certificate)
-  client_key             = base64decode(module.aks_cluster.client_key)
-  cluster_ca_certificate = base64decode(module.aks_cluster.cluster_ca_certificate)
-  load_config_file       = false
+provider "kubernetes" {
+    host                   = module.aks_cluster.host
+    client_certificate     = base64decode(module.aks_cluster.client_certificate)
+    client_key             = base64decode(module.aks_cluster.client_key)
+    cluster_ca_certificate = base64decode(module.aks_cluster.cluster_ca_certificate)
 }
 
 provider "helm" {
